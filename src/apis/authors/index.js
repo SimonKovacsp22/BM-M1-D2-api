@@ -1,18 +1,15 @@
 import express from 'express'
-import fs from 'fs'
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
 import uniqid from 'uniqid'
+import { readAuthors, writeAuthors } from '../../lib/utilities.js'
 
 const authorsRouter = express.Router()
 
-const authorsJSONPath = join(dirname(fileURLToPath(import.meta.url)),"authors.json")
-
-const authorsArray = JSON.parse(fs.readFileSync(authorsJSONPath))
 
 /********************************************************************************************/
 
-authorsRouter.post("/",(req,res) => {
+authorsRouter.post("/", async (req,res) => {
+
+    const authorsArray = await readAuthors()
 
     const newAuthor = {...req.body, createdAt: new Date(), id: uniqid()}
 
@@ -20,7 +17,7 @@ authorsRouter.post("/",(req,res) => {
 
     authorsArray.push(newAuthor)
 
-    fs.writeFileSync(authorsJSONPath,JSON.stringify(authorsArray))
+    await writeAuthors(authorsArray)
 
     res.status(201).send({id: newAuthor.id})
 
@@ -31,7 +28,9 @@ authorsRouter.post("/",(req,res) => {
 })
 /********************************************************************************************/
 
-authorsRouter.get("/",(req,res) => {
+authorsRouter.get("/", async (req,res) => {
+
+    const authorsArray = await readAuthors()
 
     
 
@@ -40,7 +39,9 @@ authorsRouter.get("/",(req,res) => {
 
 /********************************************************************************************/
 
-authorsRouter.get("/:id",(req,res) => {
+authorsRouter.get("/:id", async (req,res) => {
+
+    const authorsArray = await readAuthors()
  
 
     const reqAuthor = authorsArray.find((author) => 
@@ -53,8 +54,9 @@ authorsRouter.get("/:id",(req,res) => {
 
 /********************************************************************************************/
 
-authorsRouter.put("/:id",(req,res) => {
+authorsRouter.put("/:id", async (req,res) => {
 
+    const authorsArray = await readAuthors()
 
     const index = authorsArray.findIndex((author) => author.id === req.params.id )
 
@@ -65,9 +67,11 @@ authorsRouter.put("/:id",(req,res) => {
     
 
     authorsArray[index] = authorUpdated
-    console.log(authorsArray)
 
-    fs.writeFileSync(authorsJSONPath,JSON.stringify(authorsArray))
+    await writeAuthors(authorsArray)
+
+
+    
 
     res.send(authorUpdated)
     
@@ -75,12 +79,16 @@ authorsRouter.put("/:id",(req,res) => {
 
 /********************************************************************************************/
 
-authorsRouter.delete("/:id", (req,res) => {
+authorsRouter.delete("/:id", async  (req,res) => {
+
+    const authorsArray = await readAuthors()
      
 
     const newAuthorsArray = authorsArray.filter( author=> author.id !== req.params.id)
 
-    fs.writeFileSync(authorsJSONPath,JSON.stringify(newAuthorsArray))
+    await writeAuthors(newAuthorsArray)
+
+   
 
     res.status(204).send()
 

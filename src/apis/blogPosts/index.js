@@ -1,28 +1,25 @@
 import express from 'express'
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
 import { checkBlogPostSchema, checkValidationResult } from './validation.js'
 import createHttpError from "http-errors"
 import uniqid from 'uniqid'
-import fs from 'fs'
+import { writeBlogPosts, readBlogPosts } from '../../lib/utilities.js'
+
 
 const blogRouter = express.Router()
 
-const blogPostsJSONPath = join(dirname(fileURLToPath(import.meta.url)),"blogPosts.json")
 
-const writeBlogPosts = (array) => fs.writeFileSync(blogPostsJSONPath,JSON.stringify(array))
 
-const blogPostsArray = JSON.parse(fs.readFileSync(blogPostsJSONPath))
-
-const postABlogPost = (req,res,next) => {
+const postABlogPost = async (req,res,next) => {
 
     try{
 
     const newBlogPost = {...req.body, blogPost_id: uniqid(), createdAt:new Date()}
-    
-    blogPostsArray.push(newBlogPost)
 
-    writeBlogPosts(blogPostsArray)
+    const posts = await readBlogPosts ()
+    
+    posts.push(newBlogPost)
+
+    await writeBlogPosts(posts)
 
     
 
@@ -32,35 +29,36 @@ const postABlogPost = (req,res,next) => {
     }
 }
 
- const getAllBlogPosts = (req,res,next) => {
+ const getAllBlogPosts = async (req,res,next) => {
   try {
+    const posts = await readBlogPosts()
 
     if(req.query && req.query.category){
-         const blogsInCategory = blogPostsArray.filter( post => post.category === req.query.category)
+
+         
+
+         const blogsInCategory = posts.filter( post => post.category === req.query.category)
          
          res.send(blogsInCategory)
 
 
     } else {
-        res.send(blogPostsArray)
+        res.send(posts)
     }
-
-    
-
-  } catch (error) {
+} catch (error) {
     next(error)
   }
 }
 
- const getABlogPost = (req,res,next) => {
+ const getABlogPost = async (req,res,next) => {
   try{
-
-    const blogPostFound = blogPostsArray.find( post => post.blogPost_id === req.params.blogPost_id)
+    const posts = await readBlogPosts()
+    const blogPostFound = posts.find( post => post.blogPost_id === req.params.blogPost_id)
    
     if(blogPostFound) {
         res.send(blogPostFound)
     } else {
-         next(createHttpError(404,`book with id ${req.params.blogPost_id} was not found!`))
+         next(createHttpError(404,`blogPost with id ${req.params.blogPost_id} was not found!`))
     }
 
   } catch(error){
@@ -68,27 +66,29 @@ const postABlogPost = (req,res,next) => {
   }
 }
 
- const putABlogPost = (req,res,next) => {
+ const putABlogPost = async (req,res,next) => {
 
     try{
 
-        const blogPostToPutIndex = blogPostsArray.findIndex( post => post.blogPost_id === req.params.blogPost_id)
+
+        const posts = await readBlogPosts()
+        const blogPostToPutIndex = posts.findIndex( post => post.blogPost_id === req.params.blogPost_id)
         
         if(blogPostToPutIndex !== -1) {
             
-            const oldBlogPost = blogPostsArray[blogPostToPutIndex]
+            const oldBlogPost = posts[blogPostToPutIndex]
 
             const newBlogPost =   {...oldBlogPost, ...req.body}
 
-            blogPostsArray[blogPostToPutIndex] = newBlogPost
+            posts[blogPostToPutIndex] = newBlogPost
 
-            writeBlogPosts(blogPostsArray)
+            await writeBlogPosts(posts)
 
             res.send(newBlogPost)
 
         } else {
 
-            next(createHttpError(404,`book with id ${req.params.blogPost_id} was not found!`))
+            next(createHttpError(404,`blogPost with id ${req.params.blogPost_id} was not found!`))
             
         }
     } catch(error) {
@@ -97,11 +97,13 @@ const postABlogPost = (req,res,next) => {
 
 }
 
- const deleteABlogPost = (req,res,next) => {
+ const deleteABlogPost = async (req,res,next) => {
   try {
-       const remainingBlogPosts = blogPostsArray.filter( post => post.blogPost_id !== req.params.blogPost_id)
+       const posts = await readBlogPosts()
 
-       writeBlogPosts(remainingBlogPosts)
+       const remainingBlogPosts = posts.filter( post => post.blogPost_id !== req.params.blogPost_id)
+
+       await writeBlogPosts(remainingBlogPosts)
 
        res.status(204).send()
 

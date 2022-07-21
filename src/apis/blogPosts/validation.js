@@ -16,7 +16,7 @@ const blogPostSchema = {
   },
   'author.name':{
 
-    isEmail: {
+    isString: {
       errorMessage: "Email must be a valid email address!",
     },
   
