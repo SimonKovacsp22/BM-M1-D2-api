@@ -1,6 +1,10 @@
+import mongoose from 'mongoose'
+
 export const badRequestHandler = (err, req, res, next) => {
-    if (err.status === 400) {
+    if (err.status === 400 || err instanceof mongoose.Error.ValidationError) {
       res.status(400).send({ message: err.message, errorsList: err.errorsList })
+    } else if( err instanceof mongoose.Error.CastError){
+      res.status(400).send({ message:"Wrong id!"})
     } else {
       next(err)
     }
@@ -24,5 +28,5 @@ export const badRequestHandler = (err, req, res, next) => {
   
   export const genericServerErrorHandler = (err, req, res, next) => {
     console.log("ERR: ", err)
-    res.status(500).send({ message: "An error occurred on our side! We gonna fix this ASAP!" })
+    res.status(500).send({ message: "An error occurred on our side! We are gonna fix this ASAP!" })
   }

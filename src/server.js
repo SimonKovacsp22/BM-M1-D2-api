@@ -1,3 +1,4 @@
+
 import express from 'express';
 import listEndpoints from 'express-list-endpoints';
 import cors from 'cors';
@@ -5,6 +6,7 @@ import {join} from 'path'
 import authorsRouter from './apis/authors/index.js';
 import blogRouter from './apis/blogPosts/index.js';
 import filesRouter from './apis/files/index.js';
+import mongoose from 'mongoose';
 import { badRequestHandler, unauthorizedHandler, notFoundHandler, genericServerErrorHandler } from './apis/errorHandlers.js';
 
 
@@ -16,8 +18,10 @@ import { badRequestHandler, unauthorizedHandler, notFoundHandler, genericServerE
 
 const server = express()
 
-const port = 3001
+const port = process.env.PORT
 const publicFolderPath = join(process.cwd(), "./public")
+
+
 
 server.use(express.static(publicFolderPath))
 server.use(cors())
@@ -32,8 +36,17 @@ server.use(unauthorizedHandler)
 server.use(notFoundHandler)
 server.use(genericServerErrorHandler)
 
+mongoose.connect(process.env.MONGO_CON_URL)
 
-server.listen(port,() => {
-    console.table(listEndpoints(server))
-    console.log("Server is running on port:", port)
+
+
+mongoose.connection.on("connected",() =>{
+    console.log("success")
+    server.listen(port,() => {
+        console.table(listEndpoints(server))
+        console.log("Server is running on port:", port)
+    })
+    
 })
+
+

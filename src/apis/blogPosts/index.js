@@ -2,6 +2,7 @@ import express from 'express'
 import { checkBlogPostSchema, checkValidationResult } from './validation.js'
 import createHttpError from "http-errors"
 import uniqid from 'uniqid'
+import BlogPostsModel from './blogPostModel.js'
 import { writeBlogPosts, readBlogPosts } from '../../lib/utilities.js'
 
 
@@ -12,18 +13,13 @@ const blogRouter = express.Router()
 const postABlogPost = async (req,res,next) => {
 
     try{
+      const newBlogPost = new BlogPostsModel(req.body)
 
-    const newBlogPost = {...req.body, blogPost_id: uniqid(), createdAt:new Date()}
-
-    const posts = await readBlogPosts ()
-    
-    posts.push(newBlogPost)
-
-    await writeBlogPosts(posts)
+      const {_id} = await newBlogPost.save()
 
     
 
-    res.status(201).send({id: newBlogPost.blogPost_id})
+    res.status(201).send({id: _id})
     } catch(error) {
         next(error)
     }
@@ -31,34 +27,24 @@ const postABlogPost = async (req,res,next) => {
 
  const getAllBlogPosts = async (req,res,next) => {
   try {
-    const posts = await readBlogPosts()
+    const posts = await BlogPostsModel.find()
 
-    if(req.query && req.query.category){
+    res.send(posts)
 
-         
-
-         const blogsInCategory = posts.filter( post => post.category === req.query.category)
-         
-         res.send(blogsInCategory)
-
-
-    } else {
-        res.send(posts)
-    }
-} catch (error) {
+    } 
+        catch (error) {
     next(error)
   }
 }
 
  const getABlogPost = async (req,res,next) => {
   try{
-    const posts = await readBlogPosts()
-    const blogPostFound = posts.find( post => post.blogPost_id === req.params.blogPost_id)
-   
-    if(blogPostFound) {
-        res.send(blogPostFound)
+    const post = await BlogPostsModel.findById(req.params.id)
+    
+    if(post) {
+        res.send(post)
     } else {
-         next(createHttpError(404,`blogPost with id ${req.params.blogPost_id} was not found!`))
+         next(createHttpError(404,`blogPost with id ${req.params.id} was not found!`))
     }
 
   } catch(error){
@@ -69,27 +55,14 @@ const postABlogPost = async (req,res,next) => {
  const putABlogPost = async (req,res,next) => {
 
     try{
-
-
-        const posts = await readBlogPosts()
-        const blogPostToPutIndex = posts.findIndex( post => post.blogPost_id === req.params.blogPost_id)
+        const updatedPost = await BlogPostsModel.findByIdAndUpdate(req.params.id, req.body, {new:true, runValidators: true})
         
-        if(blogPostToPutIndex !== -1) {
-            
-            const oldBlogPost = posts[blogPostToPutIndex]
-
-            const newBlogPost =   {...oldBlogPost, ...req.body}
-
-            posts[blogPostToPutIndex] = newBlogPost
-
-            await writeBlogPosts(posts)
-
-            res.send(newBlogPost)
+        if(updatedPost){
+          res.send(updatedPost)
 
         } else {
 
-            next(createHttpError(404,`blogPost with id ${req.params.blogPost_id} was not found!`))
-            
+            next(createHttpError(404,`blogPost with id ${req.params.id} was not found!`))
         }
     } catch(error) {
         next(error)
@@ -99,13 +72,13 @@ const postABlogPost = async (req,res,next) => {
 
  const deleteABlogPost = async (req,res,next) => {
   try {
-       const posts = await readBlogPosts()
+       const PostToDelete = await BlogPostsModel.findByIdAndDelete(req.params.id)
 
-       const remainingBlogPosts = posts.filter( post => post.blogPost_id !== req.params.blogPost_id)
-
-       await writeBlogPosts(remainingBlogPosts)
-
-       res.status(204).send()
+       if(PostToDelete){
+        res.status(204).send()
+       } else {
+        next(createHttpError(404, `blogPost with id ${req.params.id} not found!`))
+       }
 
   } catch(error) {
     next(error)
@@ -116,15 +89,15 @@ const postABlogPost = async (req,res,next) => {
 
 
 
-blogRouter.post("/",checkBlogPostSchema,checkValidationResult,postABlogPost)
+blogRouter.post("/",postABlogPost)
 
 blogRouter.get("/",getAllBlogPosts)
 
-blogRouter.get("/:blogPost_id",getABlogPost)
+blogRouter.get("/:id",getABlogPost)
 
-blogRouter.put("/:blogPost_id",putABlogPost)
+blogRouter.put("/:id",putABlogPost)
 
-blogRouter.delete("/:blogPost_id",deleteABlogPost)
+blogRouter.delete("/:id",deleteABlogPost)
 
 
 
