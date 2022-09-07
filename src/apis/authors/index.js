@@ -1,5 +1,7 @@
 import AuthorsModel from './authorsModel.js'
 import createHttpError from 'http-errors'
+import { createAccessToken } from '../../lib/tokenTools.js'
+
 
 export const createAuthor= async (req,res,next)=>{
 
@@ -89,5 +91,78 @@ export const deleteAuthor = async (req,res,next) => {
         
     }
 
+}
+
+export const getMe = async (req,res,next) => {
+    try {
+        
+        const me = await AuthorsModel.findById(req.user._id)
+
+        if(me){
+
+            res.send(me)
+        
+        } else {
+
+            createHttpError(404,`author with id: ${req.params.id} was not found`)}
+
+        
+    } catch (error) {
+        next(error)
+    }
+
+}
+
+export const updateMe = async (req,res,next) => {
+    try {
+        
+        const meUpdated = await AuthorsModel.findByIdAndUpdate(req.user._id,req.body,{new:true, runValidators:true})
+
+        if(meUpdated){
+
+            res.send(meUpdated)
+        
+        } else {
+
+            createHttpError(404,`author with id: ${req.params.id} was not found`)}
+
+        
+    } catch (error) {
+        next(error)
+    }
+
+}
+
+export const deleteMe = async (req,res,next) => {
+    try {
+        
+        await AuthorsModel.findByIdAndDelete(req.user._id)
+
+            res.status(204).send("deleted user")
+        
+    } catch (error) {
+        next(error)
+    }
+
+}
+
+export const login = async (req,res,next) => {
+    try {
+
+        const{email,password} = req.body
+
+        const user = await AuthorsModel.checkCredentials(email,password)
+
+        if(user) {
+            const token = await createAccessToken({_id: user._id, role: user.role})
+            res.send({accessToken: token})
+        } else {
+
+            next(createHttpError(401, "Your credentials are wrong!"))
+        }
+        
+    } catch (error) {
+        console.log(error)
+    }
 }
 

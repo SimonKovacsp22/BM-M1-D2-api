@@ -6,7 +6,7 @@ import authorsRouter from './apis/authors/routes.js';
 import blogRouter from './apis/blogPosts/index.js';
 import filesRouter from './apis/files/index.js';
 import mongoose from 'mongoose';
-import { badRequestHandler, unauthorizedHandler, notFoundHandler, genericServerErrorHandler } from './apis/errorHandlers.js';
+import { badRequestHandler, unauthorizedHandler, notFoundHandler, genericServerErrorHandler, forbiddenErrorHandler } from './apis/errorHandlers.js';
 
 
 
@@ -32,6 +32,7 @@ server.use("/files",filesRouter)
 
 server.use(badRequestHandler)
 server.use(unauthorizedHandler)
+server.use(forbiddenErrorHandler)
 server.use(notFoundHandler)
 server.use(genericServerErrorHandler)
 
