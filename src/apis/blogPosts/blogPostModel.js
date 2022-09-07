@@ -10,10 +10,8 @@ const blogPostSchema = new Schema({
         value:{type:Number},
         unit:{type:String}
     },
-    author:{
-        name:{type:String, required:true},
-        avatar:{type: String},
-    },
+    author:{name:{type:String,required:true},avatar:{type:String}},
+    comments:[{author_id:String,text:String}],
     content:{type:String},
 },{
     timestamps:true

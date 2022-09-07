@@ -1,102 +1,93 @@
-import express from 'express'
-import uniqid from 'uniqid'
-import { readAuthors, writeAuthors } from '../../lib/utilities.js'
+import AuthorsModel from './authorsModel.js'
+import createHttpError from 'http-errors'
 
-const authorsRouter = express.Router()
+export const createAuthor= async (req,res,next)=>{
 
+   try {
 
-/********************************************************************************************/
+    const newAuthor = new AuthorsModel(req.body)
 
-authorsRouter.post("/", async (req,res) => {
+    const {_id} = await newAuthor.save()
 
-    const authorsArray = await readAuthors()
+    res.status(201).send({_id})
 
-    const newAuthor = {...req.body, createdAt: new Date(), id: uniqid()}
+   } catch(error){
 
-    if(authorsArray.find(author => author.email === req.body.email) === undefined){
+    next(error)
+   }
+}
+export const getAuthors  = async (req,res,next) => {
 
-    authorsArray.push(newAuthor)
+    try {
+        
+        const authors = await AuthorsModel.find().populate("blogPosts")
 
-    await writeAuthors(authorsArray)
+        res.send(authors)
 
-    res.status(201).send({id: newAuthor.id})
+    } catch (error) {
 
-    } else {
-        res.status(400).send("author with this email already exists")
+        next(error)
     }
 
-})
-/********************************************************************************************/
+}
+export const getAuthorById = async (req,res,next) => {
+    try {
+        
+        const author = await AuthorsModel.findById(req.params.id)
 
-authorsRouter.get("/", async (req,res) => {
+        if(author){
 
-    const authorsArray = await readAuthors()
+            res.send(author)
+        
+        } else {
 
+            createHttpError(404,`author with id: ${req.params.id} was not found`)}
+
+        
+    } catch (error) {
+        next(error)
+    }
+
+}
+export const updateAuthor = async (req,res,next) => {
+
+    try{
+
+    const updatedAuthor = await AuthorsModel.findByIdAndUpdate(req.params.id,req.body,{new:true,runValidators:true})
+
+    if(updatedAuthor){
+
+        res.send(updatedAuthor)
     
+    }else {
 
-    res.send(authorsArray)
-})
+        createHttpError(404,`author with id: ${req.params.id} was not found`)}
 
-/********************************************************************************************/
+     } catch(error){
 
-authorsRouter.get("/:id", async (req,res) => {
+        next(error)
+    }
 
-    const authorsArray = await readAuthors()
- 
+}
+export const deleteAuthor = async (req,res,next) => {
 
-    const reqAuthor = authorsArray.find((author) => 
-        author.id === req.params.id
-    )
+    try {
 
-    res.send(reqAuthor)
-    
-})
+        const deleteAuthor = await AuthorsModel.findByIdAndDelete(req.params.id)
 
-/********************************************************************************************/
+        if(deleteAuthor){
 
-authorsRouter.put("/:id", async (req,res) => {
+            res.status(204).send()
+        
+        } else {
 
-    const authorsArray = await readAuthors()
+         createHttpError(404,`author with id: ${req.params.id} was not found`)}
+        
+    } catch (error) {
 
-    const index = authorsArray.findIndex((author) => author.id === req.params.id )
+        next(error)
+        
+    }
 
-    const authorToPut = authorsArray[index]
-    console.log(index)
+}
 
-    const authorUpdated = {...authorToPut,...req.body, updatedAt: new Date()}
-    
-
-    authorsArray[index] = authorUpdated
-
-    await writeAuthors(authorsArray)
-
-
-    
-
-    res.send(authorUpdated)
-    
-})
-
-/********************************************************************************************/
-
-authorsRouter.delete("/:id", async  (req,res) => {
-
-    const authorsArray = await readAuthors()
-     
-
-    const newAuthorsArray = authorsArray.filter( author=> author.id !== req.params.id)
-
-    await writeAuthors(newAuthorsArray)
-
-   
-
-    res.status(204).send()
-
-
-
-} )
-
-
-
-
-export default authorsRouter

@@ -2,8 +2,7 @@
 import express from 'express';
 import listEndpoints from 'express-list-endpoints';
 import cors from 'cors';
-import {join} from 'path'
-import authorsRouter from './apis/authors/index.js';
+import authorsRouter from './apis/authors/routes.js';
 import blogRouter from './apis/blogPosts/index.js';
 import filesRouter from './apis/files/index.js';
 import mongoose from 'mongoose';
@@ -19,11 +18,11 @@ import { badRequestHandler, unauthorizedHandler, notFoundHandler, genericServerE
 const server = express()
 
 const port = process.env.PORT
-const publicFolderPath = join(process.cwd(), "./public")
 
 
 
-server.use(express.static(publicFolderPath))
+
+
 server.use(cors())
 server.use(express.json())
 

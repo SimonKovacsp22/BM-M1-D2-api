@@ -1,9 +1,9 @@
 import express from 'express'
-import { checkBlogPostSchema, checkValidationResult } from './validation.js'
 import createHttpError from "http-errors"
-import uniqid from 'uniqid'
 import BlogPostsModel from './blogPostModel.js'
-import { writeBlogPosts, readBlogPosts } from '../../lib/utilities.js'
+import AuthorsModel from '../authors/authorsModel.js'
+import {createComment,getCommentsForSinglePost,getCommentById,editComment,deleteComment} from "../comments/index.js"
+
 
 
 const blogRouter = express.Router()
@@ -15,7 +15,15 @@ const postABlogPost = async (req,res,next) => {
     try{
       const newBlogPost = new BlogPostsModel(req.body)
 
+      const author = await AuthorsModel.findById(req.params.author_id)
+
+      if(!author){
+       return next(createHttpError(404,`author with id: ${req.params.author_id} was not foud`))
+      }
+
       const {_id} = await newBlogPost.save()
+
+      await AuthorsModel.findByIdAndUpdate(req.params.author_id,{$push:{blogPosts:_id}},{new: true, runValidators:true})
 
     
 
@@ -89,7 +97,7 @@ const postABlogPost = async (req,res,next) => {
 
 
 
-blogRouter.post("/",postABlogPost)
+blogRouter.post("/:author_id",postABlogPost)
 
 blogRouter.get("/",getAllBlogPosts)
 
@@ -98,6 +106,16 @@ blogRouter.get("/:id",getABlogPost)
 blogRouter.put("/:id",putABlogPost)
 
 blogRouter.delete("/:id",deleteABlogPost)
+
+blogRouter.post("/:blogPost_id/comments",createComment)
+
+blogRouter.get("/:blogPost_id/comments",getCommentsForSinglePost)
+
+blogRouter.get("/:blogPost_id/comments/:id",getCommentById)
+
+blogRouter.put("/:blogPost_id/comments/:id",editComment)
+
+blogRouter.delete("/:blogPost_id/comments/:id",deleteComment)
 
 
 
