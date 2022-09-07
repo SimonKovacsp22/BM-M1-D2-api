@@ -41,7 +41,7 @@ authorSchema.methods.toJSON = function () {
 
     delete author.password
     delete author.__v
-    return user
+    return author
 }
 
 authorSchema.static("checkCredentials", async function (email, plainPW){
@@ -53,7 +53,7 @@ authorSchema.static("checkCredentials", async function (email, plainPW){
         const isMatch = await bcrypt.compare(plainPW, author.password)
 
         if(isMatch) {
-            return user
+            return author
         } else {
             return null
         }

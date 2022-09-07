@@ -104,7 +104,7 @@ export const getMe = async (req,res,next) => {
         
         } else {
 
-            createHttpError(404,`author with id: ${req.params.id} was not found`)}
+            createHttpError(404,`author with id: ${req.user._id} was not found`)}
 
         
     } catch (error) {

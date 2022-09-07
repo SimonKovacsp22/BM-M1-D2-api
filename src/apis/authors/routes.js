@@ -8,15 +8,16 @@ const authorsRouter = express.Router()
 
 
 
-authorsRouter.post("/register",JWTAuthMiddleware, createAuthor)
+authorsRouter.post("/register", createAuthor)
 authorsRouter.post("/login", login)
+authorsRouter.get("/me", JWTAuthMiddleware, getMe)
+authorsRouter.put("/me", JWTAuthMiddleware, updateMe)
+authorsRouter.delete("/me", JWTAuthMiddleware, deleteMe)
 authorsRouter.get("/",JWTAuthMiddleware, getAuthors)
 authorsRouter.get("/:id",JWTAuthMiddleware, getAuthorById)
 authorsRouter.put("/:id",JWTAuthMiddleware, adminOnlyMiddleware, updateAuthor)
 authorsRouter.delete("/:id",JWTAuthMiddleware, adminOnlyMiddleware, deleteAuthor)
-authorsRouter.get("/me", JWTAuthMiddleware, getMe)
-authorsRouter.put("/me", JWTAuthMiddleware, updateMe)
-authorsRouter.delete("/me", JWTAuthMiddleware, deleteMe)
+
 
 
 
