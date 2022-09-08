@@ -7,7 +7,8 @@ import blogRouter from './apis/blogPosts/index.js';
 import filesRouter from './apis/files/index.js';
 import mongoose from 'mongoose';
 import { badRequestHandler, unauthorizedHandler, notFoundHandler, genericServerErrorHandler, forbiddenErrorHandler } from './apis/errorHandlers.js';
-
+import googleStrategy from './lib/google.js';
+import passport from 'passport';
 
 
 
@@ -17,14 +18,16 @@ import { badRequestHandler, unauthorizedHandler, notFoundHandler, genericServerE
 
 const server = express()
 
-const port = process.env.PORT
+const port = process.env.PORT || 3001
 
 
-
+passport.use("google", googleStrategy)
 
 
 server.use(cors())
 server.use(express.json())
+
+server.use(passport.initialize())
 
 server.use("/authors", authorsRouter)
 server.use("/blogPosts",blogRouter)

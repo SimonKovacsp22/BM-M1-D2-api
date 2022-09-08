@@ -7,9 +7,10 @@ const authorSchema = new Schema({
     name:{type:String, },
     surname:{type:String, },
     email:{type:String, required:true},
-    password:{type:String, required:true},
-    dateOfBirth:{type:Date, required:true},
+    password:{type:String, required:false},
+    dateOfBirth:{type:Date, required:false},
     avatar:{type:String},
+    googleID:{type:String},
     role:{type:String, enum:["User","Admin"],default:"User"},
     blogPosts:[{type:mongoose.Types.ObjectId,ref:"BlogPost"}]
 },
